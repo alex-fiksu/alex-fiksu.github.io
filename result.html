@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Result example</title>
+    <script type="text/javascript" src="temp.json"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+</head>
+<body>
+
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+<script type="text/javascript">
+
+    var data = JSON.parse(result);
+    var prepared_data = {};
+    for(var key in data.data) {
+        var project = data.data[key].project;
+        var date = data.data[key].report_month;
+        if (!prepared_data[date]) {
+            prepared_data[date] = {};
+        }
+        if (!prepared_data[date][project]) {
+            prepared_data[date][project] = 0;
+        }
+        prepared_data[date][project] += parseFloat(data.data[key].sum);
+    }
+    var categories = Object.keys(prepared_data);
+
+
+    var prepared_series = {sum: {name: 'All', data: []}};
+    for (var i = 0; i < categories.length; i++) {
+        var sum = 0;
+        for(var key in prepared_data[categories[i]]) {
+            if (!prepared_series[key]) {
+                prepared_series[key] = {name: key, data: []}
+            }
+            prepared_series[key].data.push(prepared_data[categories[i]][key]);
+            sum += prepared_data[categories[i]][key];
+        }
+        prepared_series.sum.data.push(sum)
+    }
+
+    var series = Object.values(prepared_series);
+
+
+    Highcharts.chart('container', {
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'DDB monthly cost by projects'
+        },
+        subtitle: {
+            text: 'Example result for all env'
+        },
+        xAxis: {
+            categories: categories,
+            crosshair: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: '$'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+            '<td style="padding:0"><b>{point.y:.1f} $</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: series
+    });
+</script>
+</body>
+</html>
